@@ -153,6 +153,7 @@ function getProgressColor(remainingPercentage) {
 // Update countdown display - LIVE!
 let lastSecond = -1;
 let lastPercentage = -1;
+let finalCountdownActive = false;
 
 function updateCountdown() {
     const now = new Date(); // Always get CURRENT time
@@ -169,17 +170,53 @@ function updateCountdown() {
     const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    const totalSeconds = Math.floor(difference / 1000);
     
-    // Update time display only when seconds change
-    if (seconds !== lastSecond) {
-        document.getElementById('days').textContent = String(days).padStart(2, '0');
-        document.getElementById('hours').textContent = String(hours).padStart(2, '0');
-        document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
-        document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+    // FINAL COUNTDOWN - Last 60 seconds
+    if (totalSeconds <= 60 && !finalCountdownActive) {
+        finalCountdownActive = true;
+        activateFinalCountdown();
+    }
+    
+    if (finalCountdownActive) {
+        // Show only seconds in big format
+        document.getElementById('countdown').innerHTML = `
+            <div class="final-seconds-container">
+                <div class="final-seconds-box">
+                    <span class="final-seconds-number">${totalSeconds}</span>
+                    <span class="final-seconds-label">SEKUND DO WAKACJI!</span>
+                </div>
+                <div class="final-countdown-effects">
+                    <div class="pulse-ring"></div>
+                    <div class="pulse-ring"></div>
+                    <div class="pulse-ring"></div>
+                </div>
+            </div>
+        `;
         
-        // Animate seconds box
-        animateTimeBox(document.getElementById('seconds').parentElement);
-        lastSecond = seconds;
+        // Add pulsing color effect
+        const finalBox = document.querySelector('.final-seconds-box');
+        const hue = (totalSeconds / 60) * 120; // From red to green
+        finalBox.style.background = `linear-gradient(135deg, hsl(${hue}, 100%, 50%), hsl(${hue + 30}, 100%, 40%))`;
+        
+        // Add shake effect for last 10 seconds
+        if (totalSeconds <= 10) {
+            finalBox.classList.add('shake-animation');
+            createMiniFireworks();
+        }
+        
+    } else {
+        // Normal countdown display
+        if (seconds !== lastSecond) {
+            document.getElementById('days').textContent = String(days).padStart(2, '0');
+            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+            
+            // Animate seconds box
+            animateTimeBox(document.getElementById('seconds').parentElement);
+            lastSecond = seconds;
+        }
     }
     
     // Calculate LIVE percentage
@@ -253,7 +290,7 @@ function updateCountdown() {
     }
     
     // Time boxes color change when close
-    if (remainingPercentage < 10) {
+    if (remainingPercentage < 10 && !finalCountdownActive) {
         document.querySelectorAll('.time-box').forEach(box => {
             box.style.background = getProgressColor(remainingPercentage);
         });
@@ -271,32 +308,147 @@ function updateCountdown() {
     lastPercentage = remainingPercentage;
 }
 
-// Create mini confetti for milestones
-function createMiniConfetti() {
-    const colors = ['#ffd700', '#ff6347', '#32cd32'];
-    for (let i = 0; i < 10; i++) {
+// Activate final countdown mode
+function activateFinalCountdown() {
+    // Add special CSS for final countdown
+    const style = document.createElement('style');
+    style.textContent = `
+        .final-seconds-container {
+            position: relative;
+            animation: finalPulse 1s ease-in-out infinite;
+        }
+        
+        .final-seconds-box {
+            padding: 3rem 5rem;
+            border-radius: 30px;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+            animation: finalGlow 0.5s ease-in-out infinite alternate;
+            transition: all 0.3s ease;
+        }
+        
+        .final-seconds-number {
+            font-size: 10rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+            display: block;
+            line-height: 1;
+        }
+        
+        .final-seconds-label {
+            font-size: 2rem;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 1rem;
+            display: block;
+            font-weight: 700;
+        }
+        
+        .final-countdown-effects {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 30px;
+            animation: pulseRing 1.5s ease-out infinite;
+        }
+        
+        .pulse-ring:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+        
+        .pulse-ring:nth-child(3) {
+            animation-delay: 1s;
+        }
+        
+        @keyframes finalPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes finalGlow {
+            from { box-shadow: 0 0 30px rgba(255, 0, 0, 0.5); }
+            to { box-shadow: 0 0 60px rgba(255, 0, 0, 0.8), 0 0 100px rgba(255, 100, 0, 0.5); }
+        }
+        
+        @keyframes pulseRing {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+        
+        .shake-animation {
+            animation: shake 0.1s ease-in-out infinite !important;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-1deg); }
+            75% { transform: translateX(5px) rotate(1deg); }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Create mini fireworks for final countdown
+function createMiniFireworks() {
+    const colors = ['#ff0000', '#ff6347', '#ffd700', '#ff1493', '#00ff00'];
+    for (let i = 0; i < 5; i++) {
         setTimeout(() => {
-            const confetti = document.createElement('div');
-            confetti.style.position = 'fixed';
-            confetti.style.width = '8px';
-            confetti.style.height = '8px';
-            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.left = Math.random() * 100 + '%';
-            confetti.style.top = '50%';
-            confetti.style.borderRadius = '50%';
-            confetti.style.pointerEvents = 'none';
-            confetti.style.zIndex = '9999';
-            document.body.appendChild(confetti);
+            const firework = document.createElement('div');
+            firework.style.position = 'fixed';
+            firework.style.width = '4px';
+            firework.style.height = '4px';
+            firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            firework.style.left = Math.random() * 100 + '%';
+            firework.style.top = Math.random() * 50 + '%';
+            firework.style.borderRadius = '50%';
+            firework.style.pointerEvents = 'none';
+            firework.style.zIndex = '10000';
+            document.body.appendChild(firework);
             
-            // Animate
-            confetti.animate([
-                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-                { transform: `translate(${(Math.random() - 0.5) * 200}px, ${-Math.random() * 200}px) scale(0)`, opacity: 0 }
-            ], {
-                duration: 1500,
-                easing: 'ease-out'
-            }).onfinish = () => confetti.remove();
-        }, i * 50);
+            // Explode effect
+            const particles = 8;
+            for (let j = 0; j < particles; j++) {
+                const particle = firework.cloneNode();
+                document.body.appendChild(particle);
+                const angle = (j / particles) * 360;
+                const distance = 50 + Math.random() * 50;
+                
+                particle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { 
+                        transform: `translate(${Math.cos(angle * Math.PI / 180) * distance}px, 
+                                             ${Math.sin(angle * Math.PI / 180) * distance}px) scale(0)`, 
+                        opacity: 0 
+                    }
+                ], {
+                    duration: 1000,
+                    easing: 'ease-out'
+                }).onfinish = () => particle.remove();
+            }
+            
+            firework.remove();
+        }, i * 200);
     }
 }
 
@@ -334,11 +486,75 @@ function animateTimeBox(element) {
     }, 300);
 }
 
-// Show vacation message
+// Show vacation message - MODIFIED
 function showVacationMessage() {
+    // Hide all countdown elements
     document.getElementById('countdown').style.display = 'none';
     document.querySelector('.progress-section').style.display = 'none';
-    document.getElementById('vacation-message').classList.remove('hidden');
+    document.querySelector('.hotel-info').style.display = 'none';
+    document.querySelector('.title').style.display = 'none';
+    document.querySelector('.decorations').style.display = 'none';
+    
+    // Create custom vacation message
+    const container = document.querySelector('.content');
+    container.innerHTML = `
+        <div class="vacation-celebration">
+            <h1 class="vacation-title">🎉 Zaraz wylatuję! ✈️</h1>
+            <p class="vacation-subtitle">Do zobaczenia w krótce!</p>
+            <div class="plane-flying">✈️</div>
+            <div class="continuous-fireworks" id="fireworks-container"></div>
+        </div>
+        <style>
+            .vacation-celebration {
+                padding: 3rem;
+                text-align: center;
+                position: relative;
+                min-height: 400px;
+            }
+            
+            .vacation-title {
+                font-size: 4rem;
+                color: #ff1744;
+                margin-bottom: 1rem;
+                animation: celebrationPulse 1s ease-in-out infinite;
+                text-shadow: 0 0 20px rgba(255, 23, 68, 0.5);
+            }
+            
+            .vacation-subtitle {
+                font-size: 2rem;
+                color: #667eea;
+                margin-bottom: 2rem;
+                font-weight: 600;
+            }
+            
+            .plane-flying {
+                font-size: 5rem;
+                animation: flyAway 4s ease-in-out infinite;
+                margin: 2rem 0;
+            }
+            
+            @keyframes celebrationPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            
+            @keyframes flyAway {
+                0% { transform: translateX(-200px) translateY(0) rotate(-10deg); }
+                50% { transform: translateX(0) translateY(-30px) rotate(0deg); }
+                100% { transform: translateX(200px) translateY(0) rotate(10deg); }
+            }
+            
+            .continuous-fireworks {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                overflow: hidden;
+            }
+        </style>
+    `;
     
     // Update Firebase with completion
     const userRef = firebaseRef(firebaseDb, `users/${username}`);
@@ -351,8 +567,76 @@ function showVacationMessage() {
         completedAt: new Date().toISOString()
     });
     
-    createConfetti();
+    // Start continuous fireworks
+    startContinuousFireworks();
     clearInterval(countdownInterval);
+}
+
+// Continuous fireworks animation
+function startContinuousFireworks() {
+    const fireworksContainer = document.getElementById('fireworks-container');
+    
+    // Create fireworks every 500ms
+    setInterval(() => {
+        createFireworkBurst(fireworksContainer);
+    }, 500);
+    
+    // Create initial burst
+    for (let i = 0; i < 5; i++) {
+        setTimeout(() => createFireworkBurst(fireworksContainer), i * 100);
+    }
+}
+
+// Create a single firework burst
+function createFireworkBurst(container) {
+    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
+    const x = Math.random() * 100;
+    const y = 20 + Math.random() * 60;
+    
+    // Create explosion center
+    const burst = document.createElement('div');
+    burst.style.position = 'absolute';
+    burst.style.left = x + '%';
+    burst.style.top = y + '%';
+    burst.style.width = '4px';
+    burst.style.height = '4px';
+    container.appendChild(burst);
+    
+    // Create particles
+    const particleCount = 20;
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.left = '0';
+        particle.style.top = '0';
+        particle.style.width = '6px';
+        particle.style.height = '6px';
+        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.borderRadius = '50%';
+        particle.style.boxShadow = `0 0 6px ${particle.style.backgroundColor}`;
+        burst.appendChild(particle);
+        
+        const angle = (i / particleCount) * Math.PI * 2;
+        const velocity = 50 + Math.random() * 100;
+        const lifetime = 1000 + Math.random() * 1000;
+        
+        particle.animate([
+            {
+                transform: 'translate(0, 0) scale(1)',
+                opacity: 1
+            },
+            {
+                transform: `translate(${Math.cos(angle) * velocity}px, ${Math.sin(angle) * velocity + 30}px) scale(0)`,
+                opacity: 0
+            }
+        ], {
+            duration: lifetime,
+            easing: 'cubic-bezier(0, 0, 0.2, 1)'
+        }).onfinish = () => particle.remove();
+    }
+    
+    // Remove burst container after animation
+    setTimeout(() => burst.remove(), 2000);
 }
 
 // Create confetti effect
@@ -389,6 +673,35 @@ function createConfetti() {
     }
 }
 
+// Create mini confetti for milestones
+function createMiniConfetti() {
+    const colors = ['#ffd700', '#ff6347', '#32cd32'];
+    for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.style.position = 'fixed';
+            confetti.style.width = '8px';
+            confetti.style.height = '8px';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.top = '50%';
+            confetti.style.borderRadius = '50%';
+            confetti.style.pointerEvents = 'none';
+            confetti.style.zIndex = '9999';
+            document.body.appendChild(confetti);
+            
+            // Animate
+            confetti.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${(Math.random() - 0.5) * 200}px, ${-Math.random() * 200}px) scale(0)`, opacity: 0 }
+            ], {
+                duration: 1500,
+                easing: 'ease-out'
+            }).onfinish = () => confetti.remove();
+        }, i * 50);
+    }
+}
+
 // Add mouse parallax effect
 document.addEventListener('mousemove', (e) => {
     const waves = document.querySelectorAll('.wave');
@@ -420,3 +733,4 @@ setInterval(() => {
     const remaining = calculateRemainingPercentage();
     console.log(`⏰ LIVE: ${now.toLocaleTimeString()} | Pozostało: ${remaining.toFixed(4)}%`);
 }, 5000);
+
