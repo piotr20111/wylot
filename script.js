@@ -1,5 +1,5 @@
-// Data docelowa - 7 sierpnia 2025, godzina 15:30
-const targetDate = new Date('2025-08-07T15:30:00');
+// Data docelowa - 7 sierpnia 2025, godzina 15:40 (zmienione z 15:30)
+const targetDate = new Date('2025-08-07T15:40:00');
 const username = 'Piotr20111';
 
 // Data startowa - będzie ustawiona na pierwszy raz uruchomienia
